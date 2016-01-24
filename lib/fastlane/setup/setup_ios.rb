@@ -62,7 +62,7 @@ module Fastlane
       detect_installed_tools # after copying the existing files
       ask_to_enable_other_tools
       FileUtils.mkdir(path)
-      generate_fastfile(manually true)
+      generate_fastfile(manually: true)
       show_analytics
     end
 
