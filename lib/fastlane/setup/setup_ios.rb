@@ -74,16 +74,6 @@ module Fastlane
       if create_app and agree("Do you want to setup 'deliver', which is used to upload app screenshots, app metadata and app updates to the App Store? This requires the app to be in the App Store already. (y/n)".yellow, true)
         enable_deliver
       end
-
-      if !@tools[:snapshot] and Helper.mac? and agree("Do you want to setup 'snapshot', which will help you to automatically take screenshots of your iOS app in all languages/devices? (y/n)".yellow, true)
-        Helper.log.info "Loading up 'snapshot', this might take a few seconds"
-
-        require 'snapshot'
-        require 'snapshot/setup'
-        Snapshot::Setup.create(folder)
-
-        @tools[:snapshot] = true
-      end
     end
 
     def setup_project
