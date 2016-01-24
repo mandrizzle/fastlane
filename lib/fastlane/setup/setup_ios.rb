@@ -28,18 +28,11 @@ module Fastlane
         ask_for_apple_id
         detect_if_app_is_available
         print_config_table
-
+        fastlane_actions_path = File.join(FastlaneFolder.path, 'actions')
         if UI.confirm("Please confirm the above values")
-          copy_existing_files
-          generate_appfile
-          detect_installed_tools # after copying the existing files
-          create_app_if_necessary
-          enable_deliver
-          FileUtils.mkdir(File.join(FastlaneFolder.path, 'actions'))
-          generate_fastfile
-          show_analytics
+          default_setup(path: fastlane_actions_path)
         else
-          UI.user_error!("Setup cancelled by user")
+          manual_setup(path: fastlane_actions_path)
         end
         Helper.log.info 'Successfully finished setting up fastlane'.green
       rescue => ex # this will also be caused by Ctrl + C
@@ -50,6 +43,47 @@ module Fastlane
         raise ex
       end
       # rubocop:enable Lint/RescueException
+    end
+
+    def default_setup(path: nil)
+      copy_existing_files
+      generate_appfile(manually: false)
+      detect_installed_tools # after copying the existing files
+      create_app_if_necessary
+      enable_deliver
+      FileUtils.mkdir(path)
+      generate_fastfile(manually: false)
+      show_analytics
+    end
+
+    def manual_setup(path: nil)
+      copy_existing_files
+      generate_appfile(manually: true)
+      detect_installed_tools # after copying the existing files
+      ask_to_enable_other_tools
+      FileUtils.mkdir(path)
+      generate_fastfile(manually true)
+      show_analytics
+    end
+
+    def ask_to_enable_other_tools
+      create_app = agree('Would you like to create your app on iTunes Connect and the Developer Portal?', true)
+      if create_app
+        create_app_if_necessary
+      end
+      if create_app and agree("Do you want to setup 'deliver', which is used to upload app screenshots, app metadata and app updates to the App Store? This requires the app to be in the App Store already. (y/n)".yellow, true)
+        enable_deliver
+      end
+
+      if !@tools[:snapshot] and Helper.mac? and agree("Do you want to setup 'snapshot', which will help you to automatically take screenshots of your iOS app in all languages/devices? (y/n)".yellow, true)
+        Helper.log.info "Loading up 'snapshot', this might take a few seconds"
+
+        require 'snapshot'
+        require 'snapshot/setup'
+        Snapshot::Setup.create(folder)
+
+        @tools[:snapshot] = true
+      end
     end
 
     def setup_project
@@ -105,16 +139,26 @@ module Fastlane
       self.apple_id = ask('Your Apple ID (e.g. fastlane@krausefx.com): '.yellow)
     end
 
-    def generate_appfile
+    def generate_appfile(manually: false)
       template = File.read("#{Helper.gem_path('fastlane')}/lib/assets/AppfileTemplate")
-      template.gsub!('[[APP_IDENTIFIER]]', self.app_identifier)
-      template.gsub!('[[APPLE_ID]]', self.apple_id)
-      template.gsub!('[[DEV_PORTAL_TEAM_ID]]', self.dev_portal_team)
-      if self.itc_team
-        template.gsub!('[[ITC_TEAM]]', "itc_team_id \"#{self.itc_team}\" # iTunes Connect Team ID\n")
+      app_identifier = ''
+      apple_id = ''
+      if manually
+        app_identifier = ask('App Identifier (com.krausefx.app): '.yellow)
+        apple_id = ask('Your Apple ID (fastlane@krausefx.com): '.yellow)
       else
-        template.gsub!('[[ITC_TEAM]]', "")
+        app_identifier = self.app_identifier
+        apple_id = self.apple_id
+        template.gsub!('[[DEV_PORTAL_TEAM_ID]]', self.dev_portal_team)
+        if self.itc_team
+          template.gsub!('[[ITC_TEAM]]', "itc_team_id \"#{self.itc_team}\" # iTunes Connect Team ID\n")
+        else
+          template.gsub!('[[ITC_TEAM]]', "")
+        end
       end
+      template.gsub!('[[APP_IDENTIFIER]]', app_identifier)
+      template.gsub!('[[APPLE_ID]]', apple_id)
+
       path = File.join(folder, 'Appfile')
       File.write(path, template)
       Helper.log.info "Created new file '#{path}'. Edit it to manage your preferred app metadata information.".green
@@ -175,7 +219,7 @@ module Fastlane
       Deliver::Setup.new.run(options)
     end
 
-    def generate_fastfile
+    def generate_fastfile(manually: false)
       scheme = self.project.schemes.first
       template = File.read("#{Helper.gem_path('fastlane')}/lib/assets/DefaultFastfileTemplate")
 
