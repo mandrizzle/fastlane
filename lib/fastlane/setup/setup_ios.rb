@@ -139,25 +139,22 @@ module Fastlane
       self.apple_id = ask('Your Apple ID (e.g. fastlane@krausefx.com): '.yellow)
     end
 
+    def ask_for_app_identifier
+      self.app_identifier = ask('App Identifier (com.krausefx.app): '.yellow)
+    end
+
     def generate_appfile(manually: false)
       template = File.read("#{Helper.gem_path('fastlane')}/lib/assets/AppfileTemplate")
-      app_identifier = ''
-      apple_id = ''
       if manually
-        app_identifier = ask('App Identifier (com.krausefx.app): '.yellow)
-        apple_id = ask('Your Apple ID (fastlane@krausefx.com): '.yellow)
+        ask_for_app_identifier
+        ask_for_apple_id
       else
-        app_identifier = self.app_identifier
-        apple_id = self.apple_id
         template.gsub!('[[DEV_PORTAL_TEAM_ID]]', self.dev_portal_team)
-        if self.itc_team
-          template.gsub!('[[ITC_TEAM]]', "itc_team_id \"#{self.itc_team}\" # iTunes Connect Team ID\n")
-        else
-          template.gsub!('[[ITC_TEAM]]', "")
-        end
+        itc_team = self.itc_team ? "itc_team_id \"#{self.itc_team}\" # iTunes Connect Team ID\n" : ""
+        template.gsub!('[[ITC_TEAM]]', itc_team)
       end
-      template.gsub!('[[APP_IDENTIFIER]]', app_identifier)
-      template.gsub!('[[APPLE_ID]]', apple_id)
+      template.gsub!('[[APP_IDENTIFIER]]', self.app_identifier)
+      template.gsub!('[[APPLE_ID]]', self.apple_id)
 
       path = File.join(folder, 'Appfile')
       File.write(path, template)
