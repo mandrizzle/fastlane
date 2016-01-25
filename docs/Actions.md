@@ -1746,6 +1746,32 @@ It can process unit test results if formatted as junit report as shown in [xctes
 
 ## Misc
 
+### erb
+
+Parses a given ERB template file (passes `placeholders` as a binding), and saves the rendered output to destination. If no destination is given, it returns the rendered output as a string.
+
+Example `erb` template:
+
+```
+Variable1 <%= var1 %>
+Variable2 <%= var2 %>
+<% for item in var3 %>
+        <%= item %>
+<% end %>
+```
+
+```ruby
+erb(
+  template: "1.erb",
+  destination: "/tmp/rendered.out",
+  placeholders: {
+    :var1 => 123,
+    :var2 => "string",
+    :var3 => ["element1", "element2"]
+  }
+)
+```
+
 ### appledoc
 
 Generate Apple-like source code documentation from specially formatted source code comments.
@@ -2028,3 +2054,32 @@ opt_out_usage
 ### skip_docs
 
 Tell `fastlane` to not automatically create a `fastlane/README.md` when running `fastlane`. You can always trigger the creation of this file manually by running `fastlane docs`
+
+### ssh
+
+Lets you execute a series of commands on a remote host, if one of the commands in command-array returns non 0 - it fails.
+
+```ruby
+ssh(
+  host: "dev.januschka.com",
+  username: "root",
+  commands: [
+    "date",
+    "echo 1 > /tmp/file1"
+  ]
+)
+
+```
+
+if one of the commands fails an exception is raised
+
+
+ssh(
+  host: "dev.januschka.com",
+  username: "root",
+  commands: [
+    "date",
+    "false",
+    "echo 'i wont be executed'"
+  ]
+)
