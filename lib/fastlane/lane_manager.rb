@@ -51,6 +51,9 @@ module Fastlane
         e = ex
       end
 
+      # After running the lanes, since skip_docs might be somewhere in-between
+      Fastlane::DocsGenerator.run(ff) unless ENV["FASTLANE_SKIP_DOCS"]
+
       duration = ((Time.now - started) / 60.0).round
 
       finish_fastlane(ff, duration, e)
@@ -69,12 +72,10 @@ module Fastlane
       if error
         UI.error 'fastlane finished with errors'
         raise error
+      elsif duration > 5
+        UI.success "fastlane.tools just saved you #{duration} minutes! 🎉"
       else
-        if duration > 5
-          UI.success "fastlane.tools just saved you #{duration} minutes! 🎉"
-        else
-          UI.success 'fastlane.tools finished successfully 🎉'
-        end
+        UI.success 'fastlane.tools finished successfully 🎉'
       end
     end
 

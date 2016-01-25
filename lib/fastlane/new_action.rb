@@ -31,10 +31,9 @@ module Fastlane
       UI.success "Created new action file '#{path}'. Edit it to implement your custom action."
     end
 
-    private
-
     def self.name_valid?(name)
       name == name.downcase && name.length > 0 && !name.include?('.')
     end
+    private_class_method :name_valid?
   end
 end
