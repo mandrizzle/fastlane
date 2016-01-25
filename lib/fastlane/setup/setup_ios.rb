@@ -67,7 +67,7 @@ module Fastlane
     end
 
     def ask_to_enable_other_tools
-      unless self.itc_ref && self.portal_ref
+      if self.itc_ref.nil? && self.portal_ref.nil?
         wants_to_create_app = agree('Would you like to create your app on iTunes Connect and the Developer Portal?', true)
         if wants_to_create_app
           create_app_if_necessary
