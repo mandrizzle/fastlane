@@ -47,7 +47,7 @@ module Fastlane
       rescue => ex
         UI.important 'Variable Dump:'.yellow
         UI.message Actions.lane_context
-        UI.error ex
+        UI.error ex.to_s
         e = ex
       end
 

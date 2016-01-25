@@ -154,16 +154,13 @@ end
 begin
   FastlaneCore::UpdateChecker.start_looking_for_update('fastlane')
   FastlaneApplication.new.run
-rescue => ex # Exception => ex
-  # require 'pry'
-  # binding.pry
-  if ex.kind_of?(FastlaneCore::UserError)
-    # We don't want to submit a crash report
-  else
+rescue => ex
+  unless ex.kind_of?(FastlaneCore::Interface::FastlaneError) # We don't want to submit a crash report for user's error
     FastlaneCore::CrashReporting.handle_crash(ex)
   end
+  raise ex # important to show the stack trace if $verbose is enabled
 rescue Interrupt => ex
-  # We catch it so that the stack trace is hidden by default
+  # We catch it so that the stack trace is hidden by default when using ctrl + c
   if $verbose
     raise ex
   else
