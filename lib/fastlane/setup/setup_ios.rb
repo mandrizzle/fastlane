@@ -130,7 +130,7 @@ module Fastlane
     end
 
     def ask_for_apple_id
-      self.apple_id = ask('Your Apple ID (e.g. fastlane@krausefx.com): '.yellow)
+      self.apple_id ||= ask('Your Apple ID (e.g. fastlane@krausefx.com): '.yellow)
     end
 
     def ask_for_app_identifier
